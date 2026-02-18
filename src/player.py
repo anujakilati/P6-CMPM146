@@ -1,7 +1,9 @@
 from config import BOARD_SIZE, categories, image_size
+import tensorflow as tf
+import tensorflow.keras as keras
 from tensorflow.keras import models
 import numpy as np
-import tensorflow as tf
+import os
 
 class TicTacToePlayer:
     def get_move(self, board_state):
@@ -33,6 +35,17 @@ from matplotlib.image import imread
 import cv2
 
 class UserWebcamPlayer:
+    def __init__(self):
+        # Load the trained model
+        try:
+            model_path = os.path.join(os.path.dirname(__file__), "results/72.keras")
+            # Load without compiling first, then compile
+            self.model = models.load_model(model_path, compile=False)
+            self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+        except Exception as e:
+            print(f"Warning: Could not load model - {e}")
+            self.model = None
+    
     def _process_frame(self, frame):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         width, height = frame.shape
@@ -93,22 +106,31 @@ class UserWebcamPlayer:
             # error accessing the webcam, or processing the image
             raise e
     
+    
     def _get_emotion(self, img) -> int:
         # Your code goes here
         #
         # img an np array of size NxN (square), each pixel is a value between 0 to 255
         # you have to resize this to image_size before sending to your model
+        if self.model is None:
+            raise RuntimeError("Model failed to load. Please check the model file path and Keras compatibility.")
+        
+        img = cv2.resize(img, tuple(image_size))
+
         # to show the image here, you can use:
-        # import matplotlib.pyplot as plt
-        # plt.imshow(img, cmap='gray', vmin=0, vmax=255)
-        # plt.show()
-        #
+        import matplotlib.pyplot as plt
+        plt.imshow(img, cmap='gray', vmin=0, vmax=255)
+        plt.show()
+        
         # You have to use your saved model, use resized img as input, and get one classification value out of it
         # The classification value should be 0, 1, or 2 for neutral, happy or surprise respectively
+        img = np.stack([img, img, img], axis=-1)
+        img = np.expand_dims(img, axis=0)
+        predictions = self.model.predict(img)
+        print(f"Predictions: neutral={predictions[0][0]:.4f}, happy={predictions[0][1]:.4f}, surprise={predictions[0][2]:.4f}")
 
         # return an integer (0, 1 or 2), otherwise the code will throw an error
-        return 1
-        pass
+        return int(np.argmax(predictions))
     
     def get_move(self, board_state):
         row, col = None, None

@@ -5,11 +5,9 @@ from config import image_size, categories
 import matplotlib.pyplot as plt
 import time
 
-# Your code should change these values based on your choice of dataset for the transfer task
-# -------------
+# Doom vs Animal Crossing: 2 classes
 input_shape = (image_size[0], image_size[1], 3)
-categories_count = 3
-# -------------
+categories_count = 2
 
 models = {
     'transfered_model': TransferedModel,
@@ -33,8 +31,7 @@ def plot_history_diff(initial_hist, transfered_hist):
     plt.show()
 
 if __name__ == "__main__":
-    # Your code should change the number of epochs
-    epochs = 3
+    epochs = 15
     print('* Data preprocessing')
     train_dataset, validation_dataset, test_dataset = get_transfer_datasets()
     histories = []
